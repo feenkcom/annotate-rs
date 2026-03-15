@@ -1,5 +1,7 @@
 # annotate-rs
 
+[![crates.io](https://img.shields.io/crates/v/annotate.svg)](https://crates.io/crates/annotate)
+
 `annotate` is a Rust annotation and reflection framework.
 
 - mark functions and modules with `#[pragma(...)]`
