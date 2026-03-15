@@ -15,18 +15,16 @@ The workspace is split into:
 - `annotate-build`: build-time scanner and code generator
 - `annotate-derive`: procedural macro implementation
 
-Most users should depend on `annotate` and `annotate-build`.
-
 ## Installation
 
 Add `annotate` to your crate dependencies and `annotate-build` to your build dependencies:
 
 ```toml
 [dependencies]
-annotate = "0.0.0"
+annotate = "x.y.z"
 
 [build-dependencies]
-annotate-build = "0.0.0"
+annotate-build = "x.y.z"
 ```
 
 ## Quick Start
@@ -114,20 +112,6 @@ At build time, `annotate-build` scans the crate source and generates a static `E
 - links between modules and functions
 
 The generated Rust code is written into `OUT_DIR` and included through `annotate::environment!()`.
-
-## Features
-
-`annotate` provides these crate features:
-
-- `std`: enables standard library support
-- `global-environment`: enables a global registry of environments via `once_cell`
-- `function-call`: enables boxed dynamic return support for zero-argument functions
-
-The default feature set is:
-
-```toml
-default = ["std", "global-environment", "function-call"]
-```
 
 ## Limitations
 
