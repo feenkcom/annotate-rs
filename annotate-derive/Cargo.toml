@@ -1,6 +1,6 @@
 [package]
 name = "annotate-derive"
-version = "0.0.0"
+version = "1.0.0"
 edition = "2024"
 description = "Procedural macros for the annotate annotation framework"
 documentation = "https://docs.rs/annotate-derive"

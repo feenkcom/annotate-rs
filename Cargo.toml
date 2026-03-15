@@ -18,9 +18,9 @@ keywords = ["annotations", "reflection", "proc-macro"]
 categories = ["development-tools", "rust-patterns"]
 
 [workspace.dependencies]
-annotate = { version = "0.0.0", path = "annotate" }
-annotate-build = { version = "0.0.0", path = "annotate-build" }
-annotate-derive = { version = "0.0.0", path = "annotate-derive" }
+annotate = { version = "1.0.0", path = "annotate" }
+annotate-build = { version = "1.0.0", path = "annotate-build" }
+annotate-derive = { version = "1.0.0", path = "annotate-derive" }
 once_cell = { version = "1.19" }
 syn = { version = "2" }
 quote = { version = "1" }
