@@ -32,7 +32,7 @@ macro_rules! environment {
         extern crate annotate;
         extern crate alloc;
 
-        include!(concat!(env!("OUT_DIR"), "/annotate.rs"));
+        include!(concat!(env!("OUT_DIR"), "/annotate/", file!()));
         pub const fn environment() -> &'static annotate::Environment {
             &__annotate::ENVIRONMENT
         }
@@ -40,7 +40,7 @@ macro_rules! environment {
     ($path:path) => {
         mod __annotate {
             use $path;
-            include!(concat!(env!("OUT_DIR"), "/annotate.rs"));
+            include!(concat!(env!("OUT_DIR"), "/annotate/", file!()));
             pub const fn environment() -> &'static annotate::Environment {
                 &__annotate::ENVIRONMENT
             }

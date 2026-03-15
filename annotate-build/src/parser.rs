@@ -96,8 +96,8 @@ impl Parser {
         visitor
     }
 
-    pub(crate) fn export(&self) {
-        self.parse().export();
+    pub(crate) fn export_to(&self, file_path: impl AsRef<std::path::Path>) {
+        self.parse().export_to(file_path);
     }
 }
 

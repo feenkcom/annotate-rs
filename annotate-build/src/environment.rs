@@ -6,10 +6,10 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn export(&self) {
+    pub fn export_to(&self, file_path: impl AsRef<std::path::Path>) {
         crate::generate(
             crate::tokenize(self.modules.as_slice(), self.functions.as_slice()),
-            "annotate.rs",
+            file_path,
         );
     }
 }
