@@ -1,0 +1,27 @@
+[package]
+name = "annotate-build"
+version = "0.0.0"
+edition = "2024"
+description = "Build-script support for generating annotate environments"
+documentation = "https://docs.rs/annotate-build"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+syn = { workspace = true, features = ["full", "visit", "extra-traits"] }
+quote = { workspace = true }
+proc-macro2 = { workspace = true, features = ["span-locations"] }
+uuid = { workspace = true, features = ["v4"] }
+cargo_toml = { workspace = true }
+mustache = { workspace = true }
+prettyplease = { workspace = true }
+
+[features]
+default = []
+# Enables the ability to call functions dynamically at runtime without specifying their argument and return types
+function-call = []

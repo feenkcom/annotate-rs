@@ -1,0 +1,45 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "annotate",
+    "annotate-derive",
+    "annotate-build",
+    "annotate-examples"
+]
+
+[workspace.package]
+license = "MIT"
+repository = "https://github.com/feenkcom/annotate-rs"
+homepage = "https://github.com/feenkcom/annotate-rs"
+readme = "README.md"
+rust-version = "1.91"
+keywords = ["annotations", "reflection", "proc-macro"]
+categories = ["development-tools", "rust-patterns"]
+
+[workspace.dependencies]
+annotate = { version = "0.0.0", path = "annotate" }
+annotate-build = { version = "0.0.0", path = "annotate-build" }
+annotate-derive = { version = "0.0.0", path = "annotate-derive" }
+once_cell = { version = "1.19" }
+syn = { version = "2" }
+quote = { version = "1" }
+proc-macro2 = { version = "1"}
+prettyplease = { version = "0.2"}
+uuid = { version = "1.8"}
+cargo_toml = "0.22"
+mustache = "0.9"
+
+[profile.bench]
+debug = 1
+opt-level = 3
+
+[profile.dev]
+opt-level = 0
+debug = true
+debug-assertions = true
+overflow-checks = true
+
+[profile.release]
+opt-level = 3
+debug = true

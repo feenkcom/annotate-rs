@@ -1,0 +1,11 @@
+[package]
+name = "annotate-examples"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+annotate = { workspace = true }
+
+[build-dependencies]
+annotate-build = { workspace = true }

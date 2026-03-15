@@ -1,0 +1,25 @@
+[package]
+name = "annotate"
+version = "0.0.0"
+edition = "2024"
+description = "Runtime annotation framework for Rust functions and modules"
+documentation = "https://docs.rs/annotate"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+annotate-derive = { workspace = true }
+once_cell = { workspace = true, optional = true }
+
+[features]
+default = [ "std", "global-environment", "function-call" ]
+# Enables an ability to call functions dynamically at runtime without specifying their argument and return types.
+# Requires an allocator for Box to support type erasure
+function-call = [ ]
+std = []
+global-environment = [ "dep:once_cell", "std" ]
