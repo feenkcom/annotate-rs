@@ -1,10 +1,9 @@
 # annotate-rs
 
-`annotate-rs` is a Rust annotation and reflection workspace for functions and modules.
-
-The main crate, `annotate`, lets you:
+`annotate` is a Rust annotation and reflection framework.
 
 - mark functions and modules with `#[pragma(...)]`
+- create custom annotations
 - attach structured metadata such as strings, booleans, integers, and Rust types
 - generate a static annotation environment during `build.rs`
 - query annotated items at runtime with predicates over modules and functions
@@ -43,8 +42,6 @@ fn main() {
 Annotate functions or modules in your crate and include the generated environment:
 
 ```rust
-use annotate::pragma;
-
 annotate::environment!();
 
 #[pragma(tag = "math", active = true)]
@@ -58,7 +55,7 @@ pub mod operations {
 }
 ```
 
-Query the environment at runtime:
+Query the functions at runtime:
 
 ```rust
 use annotate::Value;
@@ -81,14 +78,23 @@ fn main() {
 }
 ```
 
-The intended lookup style is “find annotated items matching a predicate”, not “treat the environment as a name-indexed registry”.
-
-For example, querying modules by associated type:
+Querying modules by associated type:
 
 ```rust
+annotate::environment!();
+
+#[pragma(associated_type = String)]
+mod module_with_associated_type {
+    
+}
+
 fn main() {
     let module = environment()
-        .find_modules_such_that(&|module| module.has_type_attribute::<String>("associated_type"))
+        .find_modules_such_that(&|module| {
+            module.has_attribute_such_that(&|attribute| {
+                attribute.name() == "associated_type" && attribute.is_type::<String>()
+            })
+        })
         .into_iter()
         .next()
         .unwrap();

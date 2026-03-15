@@ -1,8 +1,9 @@
 use core::any::{TypeId, type_name};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
+use alloc::vec::Vec;
 
-use crate::{Attribute, Attributes, Environment, Module, Path};
+use crate::{Attribute, Environment, Module, Path};
 use crate::internal::environment::ProtoEnvironment;
 use crate::internal::function::ProtoFunction;
 
@@ -17,23 +18,26 @@ impl Function {
         self.proto_function.name
     }
 
-    pub const fn path(&self) -> &'static Path {
-        &self.proto_function.path
-    }
-
-    pub fn attributes(&self) -> Attributes {
-        Attributes::new(unsafe { (self.proto_function.attributes)() })
-    }
-
-    pub fn has_attribute_such_that(&self, f: &impl Fn(&Attribute) -> bool) -> bool {
-        self.attributes().into_iter().any(f)
-    }
-
     pub const fn module(&self) -> Option<Module> {
         if let Some(id) = self.proto_function.module {
             return Some(self.environment.get_module(id));
         }
         None
+    }
+
+    pub const fn path(&self) -> &'static Path {
+        &self.proto_function.path
+    }
+
+    pub fn find_attributes_such_that(
+        &self,
+        f: &impl Fn(&Attribute) -> bool,
+    ) -> Vec<&'static Attribute> {
+        self.attributes().into_iter().filter(|attribute| f(attribute)).collect()
+    }
+
+    pub fn has_attribute_such_that(&self, f: &impl Fn(&Attribute) -> bool) -> bool {
+        self.attributes().into_iter().any(f)
     }
 
     pub fn same_as<F: 'static>(&self) -> bool {

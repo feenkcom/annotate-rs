@@ -1,39 +1,24 @@
-use core::slice::Iter;
+use crate::{Attribute, Attributes, Module, Path};
 
-use crate::{Attribute, Module, Path};
-
-use super::environment::ProtoEnvironment;
+use super::function::Functions;
 
 #[derive(Debug, Clone)]
 pub struct ProtoModule {
     pub(crate) name: &'static str,
     pub(crate) path: Path,
-    pub(crate) submodules: &'static [usize],
+    pub(crate) _submodules: &'static [usize],
     pub(crate) functions: &'static [usize],
     pub(crate) _parent_module: Option<usize>,
     pub(crate) attributes: unsafe fn() -> &'static [Attribute],
 }
 
-pub(crate) struct Submodules {
-    iterator: Iter<'static, usize>,
-    environment: &'static ProtoEnvironment,
-}
+impl Module {
+    pub(crate) fn functions(&self) -> Functions {
+        Functions::new(self.environment, self.proto_module.functions)
+    }
 
-impl Submodules {
-    pub(crate) fn new(environment: &'static ProtoEnvironment, indices: &'static [usize]) -> Self {
-        Self {
-            iterator: indices.iter(),
-            environment,
-        }
+    pub(crate) fn attributes(&self) -> Attributes {
+        Attributes::new(unsafe { (self.proto_module.attributes)() })
     }
 }
 
-impl Iterator for Submodules {
-    type Item = Module;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.iterator
-            .next()
-            .map(|index| self.environment.get_module(*index))
-    }
-}

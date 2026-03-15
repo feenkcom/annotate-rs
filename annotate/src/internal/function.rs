@@ -2,7 +2,7 @@ use alloc::boxed::Box;
 use core::any::Any;
 use core::slice::Iter;
 
-use crate::{Attribute, Function, Path};
+use crate::{Attribute, Attributes, Function, Path};
 
 use super::environment::ProtoEnvironment;
 
@@ -47,5 +47,11 @@ impl Iterator for Functions {
         self.iterator
             .next()
             .map(|index| self.environment.get_function(*index))
+    }
+}
+
+impl Function {
+    pub(crate) fn attributes(&self) -> Attributes {
+        Attributes::new(unsafe { (self.proto_function.attributes)() })
     }
 }
