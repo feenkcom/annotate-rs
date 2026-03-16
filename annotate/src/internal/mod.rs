@@ -77,7 +77,7 @@ pub mod __private {
         ProtoModule {
             name,
             path,
-            _submodules: submodules,
+            submodules,
             functions,
             _parent_module: parent_module,
             attributes,

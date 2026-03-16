@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 use std::io::Read;
 use std::path::PathBuf;
@@ -6,7 +7,7 @@ use proc_macro2::Span;
 use syn::visit::Visit;
 
 use crate::environment::Environment;
-use crate::visitor::{CustomDerive, Visitor};
+use crate::visitor::{CustomDerive, CustomModuleDerive, Visitor};
 
 pub(crate) struct Parser {
     crate_name: String,
@@ -14,6 +15,7 @@ pub(crate) struct Parser {
     start_file: PathBuf,
     pragmas: Vec<String>,
     derives: Vec<CustomDerive>,
+    module_derives: HashMap<String, Vec<CustomModuleDerive>>,
 }
 
 impl Parser {
@@ -31,6 +33,7 @@ impl Parser {
             start_file: PathBuf::from("src/lib.rs"),
             pragmas: vec![],
             derives: vec![],
+            module_derives: Default::default(),
         }
     }
 
@@ -45,6 +48,7 @@ impl Parser {
             start_file: start_file.into(),
             pragmas: vec![],
             derives: vec![],
+            module_derives: Default::default(),
         }
     }
 
@@ -61,6 +65,11 @@ impl Parser {
         self
     }
 
+    pub(crate) fn with_module_derives(mut self, module_derives: HashMap<String, Vec<CustomModuleDerive>>) -> Self {
+        self.module_derives = module_derives;
+        self
+    }
+
     pub(crate) fn parse(&self) -> Environment {
         let visitor = self.parse_root();
         visitor.into_environment()
@@ -69,7 +78,8 @@ impl Parser {
     fn parse_root(&self) -> Visitor {
         let mut visitor = Visitor::new(self.crate_root.as_path(), self.start_file.as_path())
             .with_pragmas(&self.pragmas)
-            .with_derives(self.derives.clone());
+            .with_derives(self.derives.clone())
+            .with_module_derives(self.module_derives.clone());
 
         visitor.enter_mod(&syn::Ident::new(&self.crate_name, Span::call_site()));
 

@@ -9,11 +9,11 @@ pub struct Environment {
 
 impl Environment {
 
-    pub fn find_functions_such_that(&self, f: &impl Fn(&Function) -> bool) -> Vec<Function> {
+    pub fn find_functions_such_that(&self, f: impl Fn(&Function) -> bool) -> Vec<Function> {
         self.functions.iter().filter(|function| f(function)).cloned().collect()
     }
 
-    pub fn find_modules_such_that(&self, f: &impl Fn(&Module) -> bool) -> Vec<Module> {
+    pub fn find_modules_such_that(&self, f: impl Fn(&Module) -> bool) -> Vec<Module> {
         self.modules.iter().filter(|module| f(module)).copied().collect()
     }
 }

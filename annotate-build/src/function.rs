@@ -3,8 +3,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use proc_macro2::{Ident, Literal, Span, TokenStream};
-use quote::{ToTokens, quote};
-use syn::ItemFn;
+use quote::{quote, ToTokens};
 use uuid::Uuid;
 
 use crate::{TypedPath, WeakAnnotatedModule};
@@ -17,8 +16,8 @@ pub struct AnnotatedFunction(pub Rc<AnnotatedFunctionData>);
 #[derive(Debug)]
 pub struct AnnotatedFunctionData {
     pub id: usize,
-    pub function: ItemFn,
-    pub path: FunctionPath,
+    pub function_name: Ident,
+    pub function_path: FunctionPath,
     pub uuid: Uuid,
     pub line: usize,
     pub file: PathBuf,
@@ -27,7 +26,7 @@ pub struct AnnotatedFunctionData {
 
 impl AnnotatedFunction {
     pub fn name(&self) -> &Ident {
-        &self.0.function.sig.ident
+        &self.0.function_name
     }
 
     pub fn id(&self) -> usize {
@@ -45,7 +44,7 @@ impl AnnotatedFunction {
     pub fn link_name(&self) -> String {
         format!(
             "annotate${}${}:{}",
-            self.0.path,
+            self.0.function_path,
             self.0.file.display(),
             self.0.line
         )
@@ -54,7 +53,7 @@ impl AnnotatedFunction {
     pub fn attrib_link_name(&self) -> String {
         format!(
             "annotate$attr${}${}:{}",
-            self.0.path,
+            self.0.function_path,
             self.0.file.display(),
             self.0.line
         )
@@ -63,7 +62,7 @@ impl AnnotatedFunction {
     pub fn generated_function_name(&self) -> Ident {
         let name = format!(
             "annotate_fn_{}_{}",
-            self.0.path.to_string().replace("::", "_"),
+            self.0.function_path.to_string().replace("::", "_"),
             self.0.uuid.as_simple()
         );
         Ident::new(&name, Span::call_site())
@@ -72,7 +71,7 @@ impl AnnotatedFunction {
     pub fn generate_attributes_function_identifier(&self) -> Ident {
         let name = format!(
             "annotate_fn_attrib_{}_{}",
-            self.0.path.to_string().replace("::", "_"),
+            self.0.function_path.to_string().replace("::", "_"),
             self.0.uuid.as_simple()
         );
         Ident::new(&name, Span::call_site())
@@ -82,7 +81,7 @@ impl AnnotatedFunction {
 
 impl Display for AnnotatedFunction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "fn {} {{ ... }}", &self.0.path)
+        write!(f, "fn {} {{ ... }}", &self.0.function_path)
     }
 }
 
@@ -98,7 +97,7 @@ impl ToTokens for TokenizeProtoFunction<'_> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let function = self.0;
         let name = Literal::string(function.name().to_string().as_str());
-        let path = function.0.path.expand_as_const_path();
+        let path = function.0.function_path.expand_as_const_path();
         let attributes = function.generate_attributes_function_identifier();
         let extern_name = function.generated_function_name();
         let module = function

@@ -4,7 +4,7 @@ use annotate_examples::environment;
 #[test]
 pub fn test_function_pragma_with_attributes() {
     let function = environment()
-        .find_functions_such_that(&|function| function.name() == "pragma_with_attributes")
+        .find_functions_such_that(|function| function.name() == "pragma_with_attributes")
         .into_iter()
         .next()
         .unwrap();
@@ -15,11 +15,11 @@ pub fn test_function_pragma_with_attributes() {
         "annotate_examples::extensions::pragma_with_attributes"
     );
 
-    let attributes = function.find_attributes_such_that(&|_| true);
+    let attributes = function.find_attributes_such_that(|_| true);
     assert_eq!(attributes.len(), 3);
 
     let tag = function
-        .find_attributes_such_that(&|attribute| attribute.name() == "tag")
+        .find_attributes_such_that(|attribute| attribute.name() == "tag")
         .into_iter()
         .next()
         .unwrap();
@@ -27,7 +27,7 @@ pub fn test_function_pragma_with_attributes() {
     assert_eq!(tag.value(), &Value::Str("custom"));
 
     let active = function
-        .find_attributes_such_that(&|attribute| attribute.name() == "active")
+        .find_attributes_such_that(|attribute| attribute.name() == "active")
         .into_iter()
         .next()
         .unwrap();
@@ -35,7 +35,7 @@ pub fn test_function_pragma_with_attributes() {
     assert_eq!(active.value(), &Value::Bool(true));
 
     let value = function
-        .find_attributes_such_that(&|attribute| attribute.name() == "value")
+        .find_attributes_such_that(|attribute| attribute.name() == "value")
         .into_iter()
         .next()
         .unwrap();
@@ -46,7 +46,7 @@ pub fn test_function_pragma_with_attributes() {
 #[test]
 pub fn test_function_call_path_values() {
     let function = environment()
-        .find_functions_such_that(&|function| function.name() == "count_items")
+        .find_functions_such_that(|function| function.name() == "count_items")
         .into_iter()
         .next()
         .unwrap();
@@ -59,7 +59,7 @@ pub fn test_function_call_path_values() {
 #[test]
 pub fn test_function_call_path_references() {
     let function = environment()
-        .find_functions_such_that(&|function| function.name() == "get_item")
+        .find_functions_such_that(|function| function.name() == "get_item")
         .into_iter()
         .next()
         .unwrap();
@@ -73,8 +73,8 @@ pub fn test_function_call_path_references() {
 #[test]
 pub fn test_module_with_associated_type_string() {
     let module = environment()
-        .find_modules_such_that(&|module| {
-            module.has_attribute_such_that(&|attribute| {
+        .find_modules_such_that(|module| {
+            module.has_attribute_such_that(|attribute| {
                 attribute.name() == "associated_type" && attribute.is_type::<String>()
             })
         })
@@ -82,15 +82,15 @@ pub fn test_module_with_associated_type_string() {
         .next()
         .unwrap();
 
-    let associated_types = module.find_attributes_such_that(&|attribute| {
+    let associated_types = module.find_attributes_such_that(|attribute| {
         attribute.name() == "associated_type" && attribute.is_type::<String>()
     });
     assert_eq!(associated_types.len(), 1);
 
-    assert_eq!(module.find_functions_such_that(&|_| true).len(), 2);
+    assert_eq!(module.find_functions_such_that(|_| true).len(), 2);
 
     let function = module
-        .find_functions_such_that(&|function| function.same_as::<fn(&str) -> usize>())
+        .find_functions_such_that(|function| function.same_as::<fn(&str) -> usize>())
         .into_iter()
         .next()
         .unwrap();

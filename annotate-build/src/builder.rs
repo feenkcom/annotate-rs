@@ -1,13 +1,15 @@
+use std::collections::HashMap;
 use cargo_toml::{Manifest, Product, Value};
 use std::path::{Path, PathBuf};
 
 use crate::parser::Parser;
-use crate::visitor::CustomDerive;
+use crate::visitor::{CustomDerive, CustomModuleDerive};
 
 fn export_target(
     crate_root: &Path,
     pragmas: &[String],
     derives: &[CustomDerive],
+    module_derives: &HashMap<String, Vec<CustomModuleDerive>>,
     target_name: &str,
     target_path: impl Into<PathBuf>,
 ) {
@@ -19,6 +21,7 @@ fn export_target(
     Parser::custom(target_name, crate_root.to_path_buf(), &target_path)
         .with_pragmas(pragmas)
         .with_derives(derives)
+        .with_module_derives(module_derives.clone())
         .export_to(output_path);
 }
 
@@ -27,6 +30,7 @@ fn export_product(
     crate_root: &Path,
     pragmas: &[String],
     derives: &[CustomDerive],
+    module_derives: &HashMap<String, Vec<CustomModuleDerive>>,
     default_name: &str,
     default_path: &str,
     product: Option<&Product>,
@@ -43,6 +47,7 @@ fn export_product(
             crate_root,
             pragmas,
             derives,
+            module_derives,
             target_name.as_str(),
             target_path,
         );
@@ -54,6 +59,7 @@ fn export_products(
     crate_root: &Path,
     pragmas: &[String],
     derives: &[CustomDerive],
+    module_derives: &HashMap<String, Vec<CustomModuleDerive>>,
     products: &[Product],
 ) {
     for product in products {
@@ -64,7 +70,7 @@ fn export_products(
                 .name
                 .clone()
                 .unwrap_or_else(|| default_target_name(path));
-            export_target(crate_root, pragmas, derives, target_name.as_str(), path);
+            export_target(crate_root, pragmas, derives, module_derives, target_name.as_str(), path);
         }
     }
 }
@@ -80,6 +86,7 @@ fn default_target_name(path: &str) -> String {
 pub(crate) fn build_manifest<P, T: ToString>(
     pragmas: P,
     derives: &[CustomDerive],
+    module_derives: HashMap<String, Vec<CustomModuleDerive>>,
     manifest_path: impl Into<PathBuf>,
     crate_root: impl Into<PathBuf>,
 ) where
@@ -101,6 +108,7 @@ pub(crate) fn build_manifest<P, T: ToString>(
         crate_root.as_path(),
         pragmas.as_slice(),
         derives,
+        &module_derives,
         package_name.as_str(),
         "src/lib.rs",
         manifest.lib.as_ref(),
@@ -111,6 +119,7 @@ pub(crate) fn build_manifest<P, T: ToString>(
         crate_root.as_path(),
         pragmas.as_slice(),
         derives,
+        &module_derives,
         manifest.bin.as_slice(),
     );
     export_products(
@@ -118,6 +127,7 @@ pub(crate) fn build_manifest<P, T: ToString>(
         crate_root.as_path(),
         pragmas.as_slice(),
         derives,
+        &module_derives,
         manifest.example.as_slice(),
     );
     export_products(
@@ -125,6 +135,7 @@ pub(crate) fn build_manifest<P, T: ToString>(
         crate_root.as_path(),
         pragmas.as_slice(),
         derives,
+        &module_derives,
         manifest.test.as_slice(),
     );
     export_products(
@@ -132,6 +143,7 @@ pub(crate) fn build_manifest<P, T: ToString>(
         crate_root.as_path(),
         pragmas.as_slice(),
         derives,
+        &module_derives,
         manifest.bench.as_slice(),
     );
 }

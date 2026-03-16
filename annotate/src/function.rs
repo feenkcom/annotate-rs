@@ -31,12 +31,12 @@ impl Function {
 
     pub fn find_attributes_such_that(
         &self,
-        f: &impl Fn(&Attribute) -> bool,
+        f: impl Fn(&Attribute) -> bool,
     ) -> Vec<&'static Attribute> {
         self.attributes().into_iter().filter(|attribute| f(attribute)).collect()
     }
 
-    pub fn has_attribute_such_that(&self, f: &impl Fn(&Attribute) -> bool) -> bool {
+    pub fn has_attribute_such_that(&self, f: impl Fn(&Attribute) -> bool) -> bool {
         self.attributes().into_iter().any(f)
     }
 
