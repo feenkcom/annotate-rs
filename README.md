@@ -124,4 +124,6 @@ The generated Rust code is written into `OUT_DIR` and included through `annotate
 
 ## License
 
-Licensed under MIT.
+Copyright feenk gmbh.
+
+Licensed under MIT. See [LICENSE](LICENSE).
