@@ -9,13 +9,15 @@ use crate::Attributes;
 pub struct AnnotatedFunction {
     function: ItemFn,
     attributes: Attributes,
+    source_path: String,
 }
 
 impl AnnotatedFunction {
-    pub fn new(item_fn: ItemFn, attributes: Attributes) -> Self {
+    pub fn new(item_fn: ItemFn, attributes: Attributes, source_path: String) -> Self {
         Self {
             function: item_fn,
             attributes,
+            source_path,
         }
     }
 
@@ -34,6 +36,7 @@ impl AnnotatedFunction {
 
         let original_ident_str = original_ident.to_string();
         let return_type = &item_fn.sig.output;
+        let source_path = syn::LitStr::new(self.source_path.as_str(), Span::call_site());
 
         let wrapper_fn_ident = Self::generate_function_ident("wrapper", item_fn);
         let attrib_fn_ident = Self::generate_function_ident("attr", item_fn);
@@ -59,7 +62,7 @@ impl AnnotatedFunction {
 
             #any_return_fn_impl
 
-            #[unsafe(export_name = concat!("annotate$", module_path!(), "::", #original_ident_str, "$", file!(), ":", line!()))]
+            #[unsafe(export_name = concat!("annotate$", module_path!(), "::", #original_ident_str, "$", #source_path, ":", line!()))]
             pub fn #wrapper_fn_ident() -> #path_to_annotate::__private::FunctionPointer {
                 #path_to_annotate::__private::function_pointer(
                     &(#original_ident as fn(#(#input_types),*) #return_type) as &dyn std::any::Any,
@@ -67,7 +70,7 @@ impl AnnotatedFunction {
                 )
             }
 
-            #[unsafe(export_name = concat!("annotate$attr$", module_path!(), "::", #original_ident_str, "$", file!(), ":", line!()))]
+            #[unsafe(export_name = concat!("annotate$attr$", module_path!(), "::", #original_ident_str, "$", #source_path, ":", line!()))]
             pub fn #attrib_fn_ident() -> &'static [ #path_to_annotate::Attribute ] {
                 #expanded_metadata
                 &ATTRIBUTES

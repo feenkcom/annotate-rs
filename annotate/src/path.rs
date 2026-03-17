@@ -6,9 +6,29 @@ use core::fmt::{Debug, Display, Formatter};
 pub struct Path(pub(crate) &'static [&'static str]);
 
 impl Path {
+    pub const fn segments(&self) -> &'static [&'static str] {
+        self.0
+    }
+
+    pub const fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub const fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 
     pub const fn root(&self) -> &'static str {
         self.0[0]
+    }
+
+    pub const fn last(&self) -> Option<&'static str> {
+        let len = self.0.len();
+        if len == 0 {
+            None
+        } else {
+            Some(self.0[len - 1])
+        }
     }
 
     pub const fn all_but_last(&self) -> Self {

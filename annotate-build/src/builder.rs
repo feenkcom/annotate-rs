@@ -22,7 +22,7 @@ fn export_target(
         .with_pragmas(pragmas)
         .with_derives(derives)
         .with_module_derives(module_derives.clone())
-        .export_to(output_path);
+        .export_to(&output_path);
 }
 
 fn export_product(
@@ -70,7 +70,14 @@ fn export_products(
                 .name
                 .clone()
                 .unwrap_or_else(|| default_target_name(path));
-            export_target(crate_root, pragmas, derives, module_derives, target_name.as_str(), path);
+            export_target(
+                crate_root,
+                pragmas,
+                derives,
+                module_derives,
+                target_name.as_str(),
+                path,
+            );
         }
     }
 }

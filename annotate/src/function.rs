@@ -73,6 +73,15 @@ impl Debug for Function {
     }
 }
 
+impl PartialEq for Function {
+    fn eq(&self, other: &Self) -> bool {
+        core::ptr::eq(self.environment, other.environment)
+            && core::ptr::eq(self.proto_function, other.proto_function)
+    }
+}
+
+impl Eq for Function {}
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct TypeMismatch {
     type_name: &'static str,
