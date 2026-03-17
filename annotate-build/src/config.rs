@@ -48,7 +48,10 @@ impl BuildConfig {
         self.derives.extend(other.derives);
 
         for (pragma, derives) in other.module_derives {
-            self.module_derives.entry(pragma).or_default().extend(derives);
+            self.module_derives
+                .entry(pragma)
+                .or_default()
+                .extend(derives);
         }
     }
 
@@ -595,7 +598,10 @@ mod tests {
         let mut config = BuildConfig::from_spec(&CONFIG_SPEC);
         config.merge(BuildConfig::from_spec(&SECOND_SPEC));
 
-        assert_eq!(config.pragmas, vec!["command", "tooling", "inspect", "extensions"]);
+        assert_eq!(
+            config.pragmas,
+            vec!["command", "tooling", "inspect", "extensions"]
+        );
 
         let tooling_derives = config.module_derives.get("tooling").unwrap();
         assert_eq!(tooling_derives.len(), 1);

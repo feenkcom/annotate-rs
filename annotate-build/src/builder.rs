@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use cargo_toml::{Manifest, Product, Value};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::parser::Parser;

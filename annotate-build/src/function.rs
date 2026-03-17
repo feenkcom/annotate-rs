@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 
 use proc_macro2::{Ident, Literal, Span, TokenStream};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use uuid::Uuid;
 
 use crate::{TypedPath, WeakAnnotatedModule};
@@ -76,7 +76,6 @@ impl AnnotatedFunction {
         );
         Ident::new(&name, Span::call_site())
     }
-
 }
 
 impl Display for AnnotatedFunction {

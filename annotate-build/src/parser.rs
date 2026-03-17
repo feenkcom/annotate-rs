@@ -65,7 +65,10 @@ impl Parser {
         self
     }
 
-    pub(crate) fn with_module_derives(mut self, module_derives: HashMap<String, Vec<CustomModuleDerive>>) -> Self {
+    pub(crate) fn with_module_derives(
+        mut self,
+        module_derives: HashMap<String, Vec<CustomModuleDerive>>,
+    ) -> Self {
         self.module_derives = module_derives;
         self
     }

@@ -63,6 +63,12 @@ fn expand_environment(input: proc_macro::TokenStream) -> Result<TokenStream> {
                     &__annotate::ENVIRONMENT
                 }
             }
+
+            #[doc(hidden)]
+            #[inline(never)]
+            pub fn __ensure_linked() {
+                __annotate::__ensure_linked();
+            }
         }
     } else {
         quote! {
@@ -71,6 +77,11 @@ fn expand_environment(input: proc_macro::TokenStream) -> Result<TokenStream> {
             extern crate alloc;
 
             include!(concat!(env!("OUT_DIR"), "/annotate/", #generated_path));
+            #[doc(hidden)]
+            #[inline(never)]
+            pub fn __ensure_linked() {
+                __annotate::__ensure_linked();
+            }
             pub const fn environment() -> &'static annotate::Environment {
                 &__annotate::ENVIRONMENT
             }
@@ -109,7 +120,10 @@ fn environment_source_path(span: proc_macro::Span) -> String {
         return source_path.to_string_lossy().replace('\\', "/");
     }
 
-    manifest_root.join(source_path).to_string_lossy().replace('\\', "/")
+    manifest_root
+        .join(source_path)
+        .to_string_lossy()
+        .replace('\\', "/")
 }
 
 fn source_path_of(stream: proc_macro::TokenStream) -> String {

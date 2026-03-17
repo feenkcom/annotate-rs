@@ -78,7 +78,7 @@ impl CustomModuleDerive {
     pub fn add_function(&mut self, function_name: String) {
         self.function_names.push(function_name);
     }
-    
+
     pub fn add_module(&mut self, module_name: String) -> usize {
         let len = self.modules.len();
         self.modules.push(Self::new(module_name));

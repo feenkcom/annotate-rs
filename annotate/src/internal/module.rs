@@ -1,7 +1,7 @@
-use core::slice::Iter;
-use crate::{Attribute, Attributes, Module, Path};
-use crate::__private::ProtoEnvironment;
 use super::function::Functions;
+use crate::__private::ProtoEnvironment;
+use crate::{Attribute, Attributes, Module, Path};
+use core::slice::Iter;
 
 #[derive(Debug, Clone)]
 pub struct ProtoModule {
@@ -26,7 +26,6 @@ impl Module {
         Attributes::new(unsafe { (self.proto_module.attributes)() })
     }
 }
-
 
 pub(crate) struct Modules {
     iterator: Iter<'static, usize>,

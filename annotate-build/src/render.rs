@@ -37,6 +37,7 @@ pub fn render(token_stream: TokenStream) -> String {
 pub fn tokenize(modules: &[AnnotatedModule], functions: &[AnnotatedFunction]) -> TokenStream {
     let proto_modules = tokenize_proto_modules(modules);
     let proto_functions = tokenize_proto_functions(functions);
+    let linker_anchors = tokenize_linker_anchors(modules, functions);
     let modules = tokenize_modules(modules);
     let functions = tokenize_functions(functions);
 
@@ -57,7 +58,55 @@ pub fn tokenize(modules: &[AnnotatedModule], functions: &[AnnotatedFunction]) ->
             #proto_environment
             #modules
             #functions
+            #linker_anchors
             #environment
+        }
+    }
+}
+
+fn tokenize_linker_anchors(
+    modules: &[AnnotatedModule],
+    functions: &[AnnotatedFunction],
+) -> TokenStream {
+    let function_links = functions
+        .iter()
+        .map(|function| function.generated_function_name())
+        .collect::<Vec<_>>();
+    let function_attr_links = functions
+        .iter()
+        .map(|function| function.generate_attributes_function_identifier())
+        .collect::<Vec<_>>();
+    let module_attr_links = modules
+        .iter()
+        .map(|module| module.generate_attributes_function_identifier())
+        .collect::<Vec<_>>();
+
+    let function_count = function_links.len();
+    let function_attr_count = function_attr_links.len();
+    let module_attr_count = module_attr_links.len();
+
+    quote! {
+        #[used]
+        static __ANNOTATE_LINK_FUNCTIONS:
+            [unsafe extern "Rust" fn() -> annotate::__private::FunctionPointer; #function_count] =
+            [#(#function_links),*];
+
+        #[used]
+        static __ANNOTATE_LINK_FUNCTION_ATTRIBUTES:
+            [unsafe extern "Rust" fn() -> &'static [annotate::Attribute]; #function_attr_count] =
+            [#(#function_attr_links),*];
+
+        #[used]
+        static __ANNOTATE_LINK_MODULE_ATTRIBUTES:
+            [unsafe extern "Rust" fn() -> &'static [annotate::Attribute]; #module_attr_count] =
+            [#(#module_attr_links),*];
+
+        #[doc(hidden)]
+        #[inline(never)]
+        pub fn __ensure_linked() {
+            let _ = &__ANNOTATE_LINK_FUNCTIONS;
+            let _ = &__ANNOTATE_LINK_FUNCTION_ATTRIBUTES;
+            let _ = &__ANNOTATE_LINK_MODULE_ATTRIBUTES;
         }
     }
 }

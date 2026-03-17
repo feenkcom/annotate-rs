@@ -1,11 +1,11 @@
+use alloc::vec::Vec;
 use core::any::{TypeId, type_name};
 use core::fmt;
 use core::fmt::{Debug, Formatter};
-use alloc::vec::Vec;
 
-use crate::{Attribute, Environment, Module, Path};
 use crate::internal::environment::ProtoEnvironment;
 use crate::internal::function::ProtoFunction;
+use crate::{Attribute, Environment, Module, Path};
 
 #[derive(Clone)]
 pub struct Function {
@@ -33,7 +33,10 @@ impl Function {
         &self,
         f: impl Fn(&Attribute) -> bool,
     ) -> Vec<&'static Attribute> {
-        self.attributes().into_iter().filter(|attribute| f(attribute)).collect()
+        self.attributes()
+            .into_iter()
+            .filter(|attribute| f(attribute))
+            .collect()
     }
 
     pub fn has_attribute_such_that(&self, f: impl Fn(&Attribute) -> bool) -> bool {

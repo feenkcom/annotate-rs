@@ -66,7 +66,7 @@ impl AnnotatedModule {
     pub fn path(&self) -> &ModulePath {
         &self.0.path
     }
-    
+
     pub fn add_module(&self, module: AnnotatedModule) {
         self.0.modules.borrow_mut().push(module);
     }
@@ -91,7 +91,7 @@ impl AnnotatedModule {
         &self.0.uuid
     }
 
-    pub (crate) fn line(&self) -> usize {
+    pub(crate) fn line(&self) -> usize {
         self.0.line
     }
 

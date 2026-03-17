@@ -19,29 +19,22 @@ impl Module {
         &self.proto_module.path
     }
 
-    pub fn find_functions_such_that(
-        &self,
-        f: impl Fn(&Function) -> bool,
-    ) -> Vec<Function> {
-        self.functions()
-            .filter(|function| f(function))
-            .collect()
+    pub fn find_functions_such_that(&self, f: impl Fn(&Function) -> bool) -> Vec<Function> {
+        self.functions().filter(|function| f(function)).collect()
     }
 
-    pub fn find_modules_such_that(
-        &self,
-        f: impl Fn(&Module) -> bool,
-    ) -> Vec<Module> {
-        self.modules()
-            .filter(|function| f(function))
-            .collect()
+    pub fn find_modules_such_that(&self, f: impl Fn(&Module) -> bool) -> Vec<Module> {
+        self.modules().filter(|function| f(function)).collect()
     }
 
     pub fn find_attributes_such_that(
         &self,
         f: impl Fn(&Attribute) -> bool,
     ) -> Vec<&'static Attribute> {
-        self.attributes().into_iter().filter(|attribute| f(attribute)).collect()
+        self.attributes()
+            .into_iter()
+            .filter(|attribute| f(attribute))
+            .collect()
     }
 
     pub fn has_attribute_such_that(&self, f: impl Fn(&Attribute) -> bool) -> bool {

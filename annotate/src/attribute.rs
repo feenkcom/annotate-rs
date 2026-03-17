@@ -1,7 +1,7 @@
+use crate::internal::const_str_equal;
 use core::any::TypeId;
 use core::ops::Index;
 use core::slice::Iter;
-use crate::internal::const_str_equal;
 
 #[derive(Debug, Clone)]
 pub struct Attribute {
@@ -10,7 +10,6 @@ pub struct Attribute {
 }
 
 impl Attribute {
-
     pub const fn name(&self) -> &'static str {
         self.name
     }
@@ -56,7 +55,6 @@ pub struct Type {
 }
 
 impl Type {
-
     pub fn type_name(&self) -> &'static str {
         (self.type_name_fn)()
     }
@@ -81,10 +79,10 @@ impl PartialEq for Type {
 pub struct Attributes(&'static [Attribute]);
 
 impl Attributes {
-    pub (crate) const fn new(attributes: &'static [Attribute]) -> Attributes {
+    pub(crate) const fn new(attributes: &'static [Attribute]) -> Attributes {
         Attributes(attributes)
     }
-    
+
     pub const fn len(&self) -> usize {
         self.0.len()
     }
