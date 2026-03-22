@@ -51,6 +51,7 @@ pub fn tokenize(modules: &[AnnotatedModule], functions: &[AnnotatedFunction]) ->
 
     quote! {
         pub (crate) mod __annotate {
+            #[allow(unused_imports)]
             use super::*;
 
             #proto_modules
