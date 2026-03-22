@@ -20,6 +20,8 @@ uuid = { workspace = true, features = ["v4"] }
 cargo_toml = { workspace = true }
 mustache = { workspace = true }
 prettyplease = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 
 [features]
 default = []

@@ -13,10 +13,9 @@ use syn::visit::{Visit, visit_item_fn, visit_item_foreign_mod, visit_item_mod, v
 use syn::{Attribute, Ident, ItemFn, ItemForeignMod, ItemMod, ItemStruct, Meta, PathSegment};
 use uuid::Uuid;
 
+use crate::config::ModuleDeriveSpec;
 use crate::environment::Environment;
-use crate::{
-    AnnotatedFunction, AnnotatedFunctionData, AnnotatedModule, FunctionPath, ModuleDeriveSpec,
-};
+use crate::{AnnotatedFunction, AnnotatedFunctionData, AnnotatedModule, FunctionPath};
 
 #[derive(Debug)]
 pub struct Visitor {
@@ -103,16 +102,16 @@ impl CustomModuleDerive {
     }
 
     pub(crate) fn from_spec(spec: &ModuleDeriveSpec) -> Self {
-        let mut derive = match spec.name {
+        let mut derive = match spec.name.as_deref() {
             Some(name) => Self::new(name.to_string()),
             None => Self::default(),
         };
 
-        for function in spec.functions {
-            derive.add_function((*function).to_string());
+        for function in &spec.functions {
+            derive.add_function(function.clone());
         }
 
-        for module in spec.modules {
+        for module in &spec.modules {
             derive.modules.push(Self::from_spec(module));
         }
 
@@ -254,7 +253,7 @@ impl Visitor {
 
         for each_function in derive.function_names.as_slice() {
             self.add_annotated_function(
-                Ident::new(&each_function, Span::call_site()),
+                Ident::new(each_function, Span::call_site()),
                 module.line(),
             );
         }
@@ -400,13 +399,12 @@ impl<'ast> Visit<'ast> for Visitor {
 
                 entered_annotated_module = true;
 
-                if let Some(ref annotation_name) = self.get_annotation_name(attribute) {
-                    if let Some(module_derives) =
+                if let Some(ref annotation_name) = self.get_annotation_name(attribute)
+                    && let Some(module_derives) =
                         self.custom_module_derives.get(annotation_name).cloned()
-                    {
-                        for each in module_derives {
-                            self.visit_custom_module_derive(&annotated_module, each);
-                        }
+                {
+                    for each in module_derives {
+                        self.visit_custom_module_derive(&annotated_module, each);
                     }
                 }
             }

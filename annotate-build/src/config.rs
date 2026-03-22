@@ -1,31 +1,63 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::io;
 use std::rc::Rc;
 
 use crate::visitor;
 
-#[derive(Debug, PartialEq)]
-pub struct ConfigSpec {
-    pub functions: &'static [FunctionSpec],
-    pub modules: &'static [ModuleSpec],
+#[derive(Debug, PartialEq, serde::Deserialize)]
+struct ConfigSpec {
+    schema_version: u32,
+    #[serde(default)]
+    functions: Vec<FunctionSpec>,
+    #[serde(default)]
+    modules: Vec<ModuleSpec>,
 }
 
-#[derive(Debug, PartialEq)]
-pub struct FunctionSpec {
-    pub pragma: &'static str,
+#[derive(Debug, PartialEq, serde::Deserialize)]
+struct FunctionSpec {
+    pragma: String,
 }
 
-#[derive(Debug, PartialEq)]
-pub struct ModuleSpec {
-    pub pragma: &'static str,
-    pub derives: &'static [ModuleDeriveSpec],
+#[derive(Debug, PartialEq, serde::Deserialize)]
+struct ModuleSpec {
+    pragma: String,
+    #[serde(default)]
+    derives: Vec<ModuleDeriveSpec>,
 }
 
-#[derive(Debug, PartialEq)]
-pub struct ModuleDeriveSpec {
-    pub name: Option<&'static str>,
-    pub modules: &'static [ModuleDeriveSpec],
-    pub functions: &'static [&'static str],
+#[derive(Debug, PartialEq, serde::Deserialize)]
+pub(crate) struct ModuleDeriveSpec {
+    pub(crate) name: Option<String>,
+    #[serde(default)]
+    pub(crate) modules: Vec<ModuleDeriveSpec>,
+    #[serde(default)]
+    pub(crate) functions: Vec<String>,
+}
+
+impl TryFrom<&str> for ConfigSpec {
+    type Error = serde_json::Error;
+
+    fn try_from(spec: &str) -> Result<Self, Self::Error> {
+        let spec: Self = serde_json::from_str(spec)?;
+        if spec.schema_version != crate::SCHEMA_VERSION {
+            return Err(serde_json::Error::io(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!(
+                    "schema_version {} does not match supported version {}",
+                    spec.schema_version,
+                    crate::SCHEMA_VERSION
+                ),
+            )));
+        }
+
+        Ok(spec)
+    }
+}
+
+pub(crate) fn build_config_from_json_spec(spec: &str) -> Result<BuildConfig, serde_json::Error> {
+    let spec = ConfigSpec::try_from(spec)?;
+    Ok(BuildConfig::from_spec(&spec))
 }
 
 #[derive(Default, Debug)]
@@ -36,10 +68,6 @@ pub struct BuildConfig {
 }
 
 impl BuildConfig {
-    pub fn from_spec(spec: &ConfigSpec) -> Self {
-        spec.into()
-    }
-
     pub(crate) fn merge(&mut self, other: Self) {
         for pragma in other.pragmas {
             push_unique_pragma(&mut self.pragmas, pragma.as_str());
@@ -88,20 +116,18 @@ impl BuildConfig {
 
         self
     }
-}
 
-impl From<&ConfigSpec> for BuildConfig {
-    fn from(spec: &ConfigSpec) -> Self {
+    fn from_spec(spec: &ConfigSpec) -> Self {
         let mut config = BuildConfig::default();
 
-        for function in spec.functions {
-            push_unique_pragma(&mut config.pragmas, function.pragma);
+        for function in &spec.functions {
+            push_unique_pragma(&mut config.pragmas, &function.pragma);
         }
 
-        for module in spec.modules {
-            push_unique_pragma(&mut config.pragmas, module.pragma);
+        for module in &spec.modules {
+            push_unique_pragma(&mut config.pragmas, &module.pragma);
             config.module_derives.insert(
-                module.pragma.to_string(),
+                module.pragma.clone(),
                 module
                     .derives
                     .iter()
@@ -205,17 +231,26 @@ macro_rules! custom {
 #[macro_export]
 macro_rules! __custom_config {
     (@parse [ $($functions:expr,)* ] [ $($modules:expr,)* ]) => {
-        $crate::ConfigSpec {
-            functions: &[ $($functions,)* ],
-            modules: &[ $($modules,)* ],
-        }
+        concat!(
+            "{",
+            "\"schema_version\":",
+            $crate::__custom_schema_version!(),
+            ",",
+            "\"functions\":[",
+            $crate::__custom_join!($($functions),*),
+            "],",
+            "\"modules\":[",
+            $crate::__custom_join!($($modules),*),
+            "]",
+            "}"
+        )
     };
     (@parse [ $($functions:expr,)* ] [ $($modules:expr,)* ] fn pragma $pragma:literal, $($rest:tt)*) => {
         $crate::__custom_config!(
             @parse
             [
                 $($functions,)*
-                $crate::FunctionSpec { pragma: $pragma },
+                concat!("{", "\"pragma\":", $crate::__custom_json_string_literal!($pragma), "}"),
             ]
             [ $($modules,)* ]
             $($rest)*
@@ -226,7 +261,7 @@ macro_rules! __custom_config {
             @parse
             [
                 $($functions,)*
-                $crate::FunctionSpec { pragma: $pragma },
+                concat!("{", "\"pragma\":", $crate::__custom_json_string_literal!($pragma), "}"),
             ]
             [ $($modules,)* ]
         )
@@ -237,10 +272,16 @@ macro_rules! __custom_config {
             [ $($functions,)* ]
             [
                 $($modules,)*
-                $crate::ModuleSpec {
-                    pragma: $pragma,
-                    derives: &$crate::__custom_module_derives!(@parse [] $($body)*),
-                },
+                concat!(
+                    "{",
+                    "\"pragma\":",
+                    $crate::__custom_json_string_literal!($pragma),
+                    ",",
+                    "\"derives\":[",
+                    $crate::__custom_module_derives!(@parse [] $($body)*),
+                    "]",
+                    "}"
+                ),
             ]
             $($rest)*
         )
@@ -251,10 +292,16 @@ macro_rules! __custom_config {
             [ $($functions,)* ]
             [
                 $($modules,)*
-                $crate::ModuleSpec {
-                    pragma: $pragma,
-                    derives: &$crate::__custom_module_derives!(@parse [] $($body)*),
-                },
+                concat!(
+                    "{",
+                    "\"pragma\":",
+                    $crate::__custom_json_string_literal!($pragma),
+                    ",",
+                    "\"derives\":[",
+                    $crate::__custom_module_derives!(@parse [] $($body)*),
+                    "]",
+                    "}"
+                ),
             ]
         )
     };
@@ -262,9 +309,39 @@ macro_rules! __custom_config {
 
 #[doc(hidden)]
 #[macro_export]
+macro_rules! __custom_join {
+    () => {
+        ""
+    };
+    ($value:expr) => {
+        $value
+    };
+    ($first:expr, $($rest:expr),+ $(,)?) => {
+        concat!($first, ",", $crate::__custom_join!($($rest),+))
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __custom_json_string_literal {
+    ($value:literal) => {
+        concat!("\"", $value, "\"")
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __custom_schema_version {
+    () => {
+        "1"
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
 macro_rules! __custom_module_derives {
     (@parse [ $($derives:expr,)* ]) => {
-        [ $($derives,)* ]
+        $crate::__custom_join!($($derives),*)
     };
     (@parse [ $($derives:expr,)* ] derive { mod $name:ident { $($body:tt)* } }, $($rest:tt)*) => {
         $crate::__custom_module_derives!(
@@ -329,30 +406,51 @@ macro_rules! __custom_module_derives {
 #[macro_export]
 macro_rules! __custom_module_derive_spec {
     (@unnamed [ $($functions:expr,)* ] [ $($modules:expr,)* ]) => {
-        $crate::ModuleDeriveSpec {
-            name: None,
-            functions: &[ $($functions,)* ],
-            modules: &[ $($modules,)* ],
-        }
+        concat!(
+            "{",
+            "\"functions\":[",
+            $crate::__custom_join!($($functions),*),
+            "],",
+            "\"modules\":[",
+            $crate::__custom_join!($($modules),*),
+            "]",
+            "}"
+        )
     };
     (@named_ident $name:ident [ $($functions:expr,)* ] [ $($modules:expr,)* ]) => {
-        $crate::ModuleDeriveSpec {
-            name: Some(stringify!($name)),
-            functions: &[ $($functions,)* ],
-            modules: &[ $($modules,)* ],
-        }
+        concat!(
+            "{",
+            "\"name\":\"",
+            stringify!($name),
+            "\",",
+            "\"functions\":[",
+            $crate::__custom_join!($($functions),*),
+            "],",
+            "\"modules\":[",
+            $crate::__custom_join!($($modules),*),
+            "]",
+            "}"
+        )
     };
     (@named $name:literal [ $($functions:expr,)* ] [ $($modules:expr,)* ]) => {
-        $crate::ModuleDeriveSpec {
-            name: Some($name),
-            functions: &[ $($functions,)* ],
-            modules: &[ $($modules,)* ],
-        }
+        concat!(
+            "{",
+            "\"name\":",
+            $crate::__custom_json_string_literal!($name),
+            ",",
+            "\"functions\":[",
+            $crate::__custom_join!($($functions),*),
+            "],",
+            "\"modules\":[",
+            $crate::__custom_join!($($modules),*),
+            "]",
+            "}"
+        )
     };
     (@unnamed [ $($functions:expr,)* ] [ $($modules:expr,)* ] fn $function:ident, $($rest:tt)*) => {
         $crate::__custom_module_derive_spec!(
             @unnamed
-            [ $($functions,)* stringify!($function), ]
+            [ $($functions,)* concat!("\"", stringify!($function), "\""), ]
             [ $($modules,)* ]
             $($rest)*
         )
@@ -360,7 +458,7 @@ macro_rules! __custom_module_derive_spec {
     (@unnamed [ $($functions:expr,)* ] [ $($modules:expr,)* ] fn $function:ident) => {
         $crate::__custom_module_derive_spec!(
             @unnamed
-            [ $($functions,)* stringify!($function), ]
+            [ $($functions,)* concat!("\"", stringify!($function), "\""), ]
             [ $($modules,)* ]
         )
     };
@@ -368,7 +466,7 @@ macro_rules! __custom_module_derive_spec {
         $crate::__custom_module_derive_spec!(
             @named
             $name
-            [ $($functions,)* stringify!($function), ]
+            [ $($functions,)* concat!("\"", stringify!($function), "\""), ]
             [ $($modules,)* ]
             $($rest)*
         )
@@ -377,7 +475,7 @@ macro_rules! __custom_module_derive_spec {
         $crate::__custom_module_derive_spec!(
             @named
             $name
-            [ $($functions,)* stringify!($function), ]
+            [ $($functions,)* concat!("\"", stringify!($function), "\""), ]
             [ $($modules,)* ]
         )
     };
@@ -385,7 +483,7 @@ macro_rules! __custom_module_derive_spec {
         $crate::__custom_module_derive_spec!(
             @named_ident
             $name
-            [ $($functions,)* stringify!($function), ]
+            [ $($functions,)* concat!("\"", stringify!($function), "\""), ]
             [ $($modules,)* ]
             $($rest)*
         )
@@ -394,7 +492,7 @@ macro_rules! __custom_module_derive_spec {
         $crate::__custom_module_derive_spec!(
             @named_ident
             $name
-            [ $($functions,)* stringify!($function), ]
+            [ $($functions,)* concat!("\"", stringify!($function), "\""), ]
             [ $($modules,)* ]
         )
     };
@@ -493,23 +591,28 @@ mod tests {
     use super::{ConfigSpec, FunctionSpec, ModuleDeriveSpec, ModuleSpec};
     use crate::BuildConfig;
 
-    const CONFIG_SPEC: ConfigSpec = ConfigSpec {
-        functions: &[FunctionSpec { pragma: "command" }],
-        modules: &[ModuleSpec {
-            pragma: "tooling",
-            derives: &[ModuleDeriveSpec {
-                name: None,
-                functions: &["bootstrap", "init"],
-                modules: &[ModuleDeriveSpec {
-                    name: Some("nested"),
-                    functions: &["run"],
-                    modules: &[],
+    fn config_spec() -> ConfigSpec {
+        ConfigSpec {
+            schema_version: crate::SCHEMA_VERSION,
+            functions: vec![FunctionSpec {
+                pragma: "command".to_string(),
+            }],
+            modules: vec![ModuleSpec {
+                pragma: "tooling".to_string(),
+                derives: vec![ModuleDeriveSpec {
+                    name: None,
+                    functions: vec!["bootstrap".to_string(), "init".to_string()],
+                    modules: vec![ModuleDeriveSpec {
+                        name: Some("nested".to_string()),
+                        functions: vec!["run".to_string()],
+                        modules: vec![],
+                    }],
                 }],
             }],
-        }],
-    };
+        }
+    }
 
-    const CONFIG_SPEC_USING_MACROS: ConfigSpec = custom! {
+    const CONFIG_SPEC_USING_MACROS: &str = custom! {
         fn pragma "command",
         mod pragma "tooling" {
             derive {
@@ -522,7 +625,7 @@ mod tests {
         }
     };
 
-    const PHLOW_SPEC_MACROS: ConfigSpec = custom! {
+    const PHLOW_SPEC_MACROS: &str = custom! {
         fn pragma "view",
         mod pragma "extensions" {
             derive {
@@ -536,26 +639,52 @@ mod tests {
         }
     };
 
-    const PHLOW_SPEC: ConfigSpec = ConfigSpec {
-        functions: &[FunctionSpec { pragma: "view" }],
-        modules: &[ModuleSpec {
-            pragma: "extensions",
-            derives: &[ModuleDeriveSpec {
-                name: Some("__utilities"),
-                functions: &[
-                    "phlow_to_string",
-                    "phlow_type_name",
-                    "phlow_create_view",
-                    "phlow_defining_methods",
-                ],
-                modules: &[],
+    fn phlow_spec() -> ConfigSpec {
+        ConfigSpec {
+            schema_version: crate::SCHEMA_VERSION,
+            functions: vec![FunctionSpec {
+                pragma: "view".to_string(),
             }],
-        }],
-    };
+            modules: vec![ModuleSpec {
+                pragma: "extensions".to_string(),
+                derives: vec![ModuleDeriveSpec {
+                    name: Some("__utilities".to_string()),
+                    functions: vec![
+                        "phlow_to_string".to_string(),
+                        "phlow_type_name".to_string(),
+                        "phlow_create_view".to_string(),
+                        "phlow_defining_methods".to_string(),
+                    ],
+                    modules: vec![],
+                }],
+            }],
+        }
+    }
+
+    const PHLOW_SPEC_JSON: &str = r#"
+        {
+            "schema_version": 1,
+            "functions": [ { "pragma": "view" } ],
+            "modules": [ {
+                "pragma": "extensions",
+                "derives": [
+                    {
+                        "name": "__utilities",
+                        "functions": [
+                            "phlow_to_string",
+                            "phlow_type_name",
+                            "phlow_create_view",
+                            "phlow_defining_methods"
+                        ]
+                    }
+                ] } ]
+        }
+    "#;
 
     #[test]
     fn build_config_from_spec_collects_pragmas_and_module_derives() {
-        let config = BuildConfig::from_spec(&CONFIG_SPEC);
+        let spec = config_spec();
+        let config = BuildConfig::from_spec(&spec);
 
         assert_eq!(config.pragmas, vec!["command", "tooling"]);
         assert!(config.derives.is_empty());
@@ -574,17 +703,46 @@ mod tests {
 
     #[test]
     fn custom_macro_builds_the_same_config_spec() {
-        assert_eq!(CONFIG_SPEC, CONFIG_SPEC_USING_MACROS);
+        let spec = ConfigSpec::try_from(CONFIG_SPEC_USING_MACROS).unwrap();
+        assert_eq!(config_spec(), spec);
     }
 
     #[test]
     fn phlow_macro_spec_matches_manual_spec() {
-        assert_eq!(PHLOW_SPEC, PHLOW_SPEC_MACROS);
+        let spec = ConfigSpec::try_from(PHLOW_SPEC_MACROS).unwrap();
+        assert_eq!(phlow_spec(), spec);
+    }
+
+    #[test]
+    fn phlow_json_string_deserializes_as_manual_spec() {
+        let spec = ConfigSpec::try_from(PHLOW_SPEC_JSON).unwrap();
+        assert_eq!(phlow_spec(), spec);
+    }
+
+    #[test]
+    fn json_schema_version_must_match() {
+        let error = ConfigSpec::try_from(
+            r#"
+                {
+                    "schema_version": 999,
+                    "functions": []
+                }
+            "#,
+        )
+        .unwrap_err();
+
+        assert_eq!(
+            error.to_string(),
+            format!(
+                "schema_version 999 does not match supported version {}",
+                crate::SCHEMA_VERSION
+            )
+        );
     }
 
     #[test]
     fn build_config_merge_combines_specs() {
-        const SECOND_SPEC: ConfigSpec = custom! {
+        const SECOND_SPEC: &str = custom! {
             fn pragma "inspect",
             mod pragma "extensions" {
                 derive {
@@ -595,8 +753,10 @@ mod tests {
             }
         };
 
-        let mut config = BuildConfig::from_spec(&CONFIG_SPEC);
-        config.merge(BuildConfig::from_spec(&SECOND_SPEC));
+        let first_spec = config_spec();
+        let second_spec = ConfigSpec::try_from(SECOND_SPEC).unwrap();
+        let mut config = BuildConfig::from_spec(&first_spec);
+        config.merge(BuildConfig::from_spec(&second_spec));
 
         assert_eq!(
             config.pragmas,
@@ -610,5 +770,13 @@ mod tests {
         assert_eq!(extension_derives.len(), 1);
         assert_eq!(extension_derives[0].name(), Some("diagnostics"));
         assert_eq!(extension_derives[0].function_names(), ["collect_warnings"]);
+    }
+
+    #[test]
+    fn macro_schema_version_matches_public_constant() {
+        assert_eq!(
+            crate::SCHEMA_VERSION.to_string(),
+            crate::__custom_schema_version!()
+        );
     }
 }
