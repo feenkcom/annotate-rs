@@ -1,5 +1,4 @@
 use std::fmt::{Debug, Display, Formatter};
-use std::path::PathBuf;
 use std::rc::Rc;
 
 use proc_macro2::{Ident, Literal, Span, TokenStream};
@@ -20,7 +19,7 @@ pub struct AnnotatedFunctionData {
     pub function_path: FunctionPath,
     pub uuid: Uuid,
     pub line: usize,
-    pub file: PathBuf,
+    pub source_path: String,
     pub annotated_module: Option<WeakAnnotatedModule>,
 }
 
@@ -44,18 +43,14 @@ impl AnnotatedFunction {
     pub fn link_name(&self) -> String {
         format!(
             "annotate${}${}:{}",
-            self.0.function_path,
-            self.0.file.display(),
-            self.0.line
+            self.0.function_path, self.0.source_path, self.0.line
         )
     }
 
     pub fn attrib_link_name(&self) -> String {
         format!(
             "annotate$attr${}${}:{}",
-            self.0.function_path,
-            self.0.file.display(),
-            self.0.line
+            self.0.function_path, self.0.source_path, self.0.line
         )
     }
 

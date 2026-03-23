@@ -324,6 +324,14 @@ impl Visitor {
         vec![]
     }
 
+    fn source_path(&self) -> String {
+        self.crate_root
+            .join(self.current_file())
+            .display()
+            .to_string()
+            .replace('\\', "/")
+    }
+
     fn add_annotated_function(&mut self, function_name: Ident, line: usize) {
         let mut function_path: FunctionPath = (&self.current_mod).into();
         function_path.push(function_name.clone());
@@ -334,7 +342,7 @@ impl Visitor {
             function_path,
             uuid: Uuid::new_v4(),
             line,
-            file: self.crate_root.join(self.current_file()),
+            source_path: self.source_path(),
             annotated_module: self.annotated_modules_stack.front().map(|m| m.as_weak()),
         }));
 
@@ -352,7 +360,7 @@ impl Visitor {
             self.current_mod.clone().into(),
             self.annotated_modules_stack.front(),
             line,
-            self.crate_root.join(self.current_file()),
+            self.source_path(),
         );
 
         if let Some(parent_module) = self.annotated_modules_stack.front() {

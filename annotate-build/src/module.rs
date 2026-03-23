@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::fmt::{Display, Formatter};
-use std::path::PathBuf;
 use std::rc::{Rc, Weak};
 
 use proc_macro2::{Ident, Literal, Span, TokenStream};
@@ -27,7 +26,7 @@ struct AnnotatedModuleData {
     pub functions: RefCell<Vec<AnnotatedFunction>>,
     pub uuid: Uuid,
     pub line: usize,
-    pub file: PathBuf,
+    pub source_path: String,
 }
 
 impl AnnotatedModule {
@@ -37,7 +36,7 @@ impl AnnotatedModule {
         path: ModulePath,
         parent: Option<&AnnotatedModule>,
         line: usize,
-        file: PathBuf,
+        source_path: String,
     ) -> Self {
         Self(Rc::new(AnnotatedModuleData {
             id,
@@ -48,7 +47,7 @@ impl AnnotatedModule {
             functions: RefCell::new(vec![]),
             uuid: Uuid::new_v4(),
             line,
-            file,
+            source_path,
         }))
     }
 
@@ -95,15 +94,11 @@ impl AnnotatedModule {
         self.0.line
     }
 
-    fn file(&self) -> &std::path::Path {
-        self.0.file.as_path()
-    }
-
     pub fn generate_attributes_function_link_name(&self) -> String {
         format!(
             "annotate$attr${}${}:{}",
             self.path(),
-            self.file().display(),
+            self.0.source_path,
             self.line()
         )
     }
