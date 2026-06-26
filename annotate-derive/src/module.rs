@@ -4,6 +4,7 @@ use syn::ItemMod;
 use uuid::Uuid;
 
 use crate::attributes::Attributes;
+use crate::symbol_source_path;
 
 pub struct AnnotatedModule {
     item_mod: ItemMod,
@@ -30,7 +31,10 @@ impl AnnotatedModule {
 
         let name = self.name().to_string();
         let expanded_metadata = self.attributes.expand();
-        let source_path = syn::LitStr::new(self.source_path.as_str(), Span::call_site());
+        let source_path = syn::LitStr::new(
+            symbol_source_path(&self.source_path).as_str(),
+            Span::call_site(),
+        );
         let attrib_fn_ident = Self::generate_function_ident("attr", item_mod);
 
         quote! {

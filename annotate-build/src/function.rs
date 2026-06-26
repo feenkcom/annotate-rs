@@ -5,7 +5,7 @@ use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{ToTokens, quote};
 use uuid::Uuid;
 
-use crate::{TypedPath, WeakAnnotatedModule};
+use crate::{TypedPath, WeakAnnotatedModule, symbol_source_path};
 
 pub type FunctionPath = TypedPath<AnnotatedFunction>;
 
@@ -43,14 +43,18 @@ impl AnnotatedFunction {
     pub fn link_name(&self) -> String {
         format!(
             "annotate${}${}:{}",
-            self.0.function_path, self.0.source_path, self.0.line
+            self.0.function_path,
+            symbol_source_path(&self.0.source_path),
+            self.0.line
         )
     }
 
     pub fn attrib_link_name(&self) -> String {
         format!(
             "annotate$attr${}${}:{}",
-            self.0.function_path, self.0.source_path, self.0.line
+            self.0.function_path,
+            symbol_source_path(&self.0.source_path),
+            self.0.line
         )
     }
 
