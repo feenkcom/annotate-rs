@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{ToTokens, quote};
 use uuid::Uuid;
 
-use crate::{AnnotatedFunction, TypedPath, symbol_source_path};
+use crate::{AnnotatedFunction, TypedPath};
 
 pub type ModulePath = TypedPath<AnnotatedModule>;
 
@@ -98,7 +98,7 @@ impl AnnotatedModule {
         format!(
             "annotate$attr${}${}:{}",
             self.path(),
-            symbol_source_path(&self.0.source_path),
+            self.0.source_path,
             self.line()
         )
     }

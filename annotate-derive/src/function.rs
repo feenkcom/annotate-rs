@@ -4,7 +4,7 @@ use syn::{FnArg, ItemFn};
 use uuid::Uuid;
 use uuid::fmt::Simple;
 
-use crate::{Attributes, symbol_source_path};
+use crate::Attributes;
 
 pub struct AnnotatedFunction {
     function: ItemFn,
@@ -36,10 +36,7 @@ impl AnnotatedFunction {
 
         let original_ident_str = original_ident.to_string();
         let return_type = &item_fn.sig.output;
-        let source_path = syn::LitStr::new(
-            symbol_source_path(&self.source_path).as_str(),
-            Span::call_site(),
-        );
+        let source_path = syn::LitStr::new(self.source_path.as_str(), Span::call_site());
 
         let wrapper_fn_ident = Self::generate_function_ident("wrapper", item_fn);
         let attrib_fn_ident = Self::generate_function_ident("attr", item_fn);

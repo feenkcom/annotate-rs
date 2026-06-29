@@ -19,10 +19,6 @@ mod path;
 mod render;
 mod visitor;
 
-pub(crate) fn symbol_source_path(path: &str) -> String {
-    path.replace('/', "$")
-}
-
 /// Scan the current crate for `#[pragma(...)]` annotations and export the generated environment.
 pub fn build() {
     build_with(|_| {});

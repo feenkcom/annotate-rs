@@ -12,10 +12,6 @@ mod attributes;
 mod function;
 mod module;
 
-pub(crate) fn symbol_source_path(path: &str) -> String {
-    path.replace('/', "$")
-}
-
 #[proc_macro_attribute]
 pub fn pragma(
     attr: proc_macro::TokenStream,
